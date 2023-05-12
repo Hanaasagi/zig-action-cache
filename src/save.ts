@@ -2,7 +2,7 @@ import * as cache from '@actions/cache';
 import * as core from '@actions/core';
 import { Config, STATE_KEY } from './config';
 
-async function _run(): void {
+async function _run(): Promise<void> {
   const config = await Config.new();
   config.printInfo();
   core.info('');
@@ -19,7 +19,7 @@ async function _run(): void {
   core.info(`cache saved`);
 }
 
-async function run(): void {
+async function run(): Promise<void> {
   // check the presence of action cache service
   if (!cache.isFeatureAvailable()) {
     return;

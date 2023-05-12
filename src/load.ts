@@ -10,7 +10,7 @@ function setCacheHitOutput(cacheHit: boolean): void {
   core.setOutput('cache-hit', cacheHit.toString());
 }
 
-async function _run(): void {
+async function _run(): Promise<void> {
   const cacheOnFailure =
     core.getInput('cache-on-failure').toLowerCase() === 'true' ? true : false;
 
@@ -52,7 +52,7 @@ async function _run(): void {
   }
 }
 
-async function run(): void {
+async function run(): Promise<void> {
   // check the presence of action cache service
   if (!cache.isFeatureAvailable()) {
     setCacheHitOutput(false);
