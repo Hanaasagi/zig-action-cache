@@ -58651,7 +58651,7 @@ class ZigInfo {
             //  "target": "x86_64-linux.6.3.1...6.3.1-gnu.2.36"
             // }
             stdout = yield (0, utils_1.getCmdOutput)('zig', ['env']);
-            let env_info = JSON.parse(stdout);
+            const env_info = JSON.parse(stdout);
             return new ZigInfo(version, env_info.global_cache_dir, env_info.target);
         });
     }
@@ -58667,7 +58667,7 @@ class Config {
         this.keyFiles = [];
     }
     static getKeyPrefix() {
-        let keyParts = [];
+        const keyParts = [];
         const prefixKey = core.getInput('prefix-key') || 'zig-cache-step-0';
         keyParts.push(prefixKey);
         const sharedKey = core.getInput('shared-key') || '';
@@ -58690,15 +58690,15 @@ class Config {
         const envPrefixes = ['ZIG', 'CC', 'CFLAGS', 'CXX', 'CMAKE'];
         envPrefixes.push(...core.getInput('env-vars').split(/\s+/).filter(Boolean));
         const keyEnvs = new Map();
-        Object.entries(process.env).forEach(([name, value]) => {
+        for (const [name, value] of Object.entries(process.env)) {
             if (envPrefixes.some(prefix => name.startsWith(prefix)) && value) {
                 keyEnvs.set(name, value);
             }
-        });
+        }
         return keyEnvs;
     }
     static getCachePaths() {
-        let cachePaths = ['zig-cache'];
+        const cachePaths = ['zig-cache'];
         const cacheDirectories = core.getInput('cache-directories');
         for (const dir of cacheDirectories.trim().split(/\s+/).filter(Boolean)) {
             cachePaths.push(dir);
@@ -58724,8 +58724,8 @@ class Config {
             }
             // 3. compute hash
             const hash = hasher.digest('hex');
-            config.restoreKey = config.keyPrefix + '-' + hash;
-            let keyFiles = ['build.zig'];
+            config.restoreKey = `${config.keyPrefix}-${hash}`;
+            const keyFiles = ['build.zig'];
             config.keyFiles = keyFiles;
             hasher = crypto_1.default.createHash('sha1');
             for (const file of keyFiles) {
@@ -58750,7 +58750,7 @@ class Config {
                     finally { if (e_1) throw e_1.error; }
                 }
             }
-            config.cacheKey = config.restoreKey + '-' + hasher.digest('hex');
+            config.cacheKey = `${config.restoreKey}-${hasher.digest('hex')}`;
             config.cachePaths = [zigInfo.global_cache_dir, ...this.getCachePaths()];
             return config;
         });
@@ -58758,8 +58758,8 @@ class Config {
     printInfo() {
         core.startGroup('Cache Configuration');
         core.info(`Cache Paths:`);
-        for (const path of this.cachePaths) {
-            core.info(`    ${path}`);
+        for (const p of this.cachePaths) {
+            core.info(`    ${p}`);
         }
         core.info(`Restore Key:`);
         core.info(`    ${this.restoreKey}`);
