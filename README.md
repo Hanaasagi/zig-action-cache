@@ -1,11 +1,25 @@
 # GitHub Action Cache For Zig
 
-A GitHub Action that implements caching rules for zig project.
+An out-of-the-box GitHub Action that automatically caches dependencies and compiled artifacts for a Zig project.
 
-TODO:
+## How it works 
 
-- [ ] zigmod
-- [ ] gyro
+Firstly, it calculates a key based on the following states:
+
+- The version of `zig` and the output information of `zig env`.
+- Environment variables during compilation, which can be configured through the `env-vars` parameter in YAML.
+- The file hashes of `build.zig` and `deps.zig`.
+- Automatic detection of whether a package manager is used and file hash calculation for `gyro.zzz` or `zig.mod`.
+- User-configured keys, as shown in the configuration file below.
+
+Then it checks the history to see if there is a build workflow with the same key. If a match is found, it will restore the cache from the previous build.
+
+What directories will it cache?
+
+- `global_cache_dir` in `zig env`
+- `zig-cache`
+- If you're using a package manager and there is a lock file, then directories such as `.gyro/` or `.zigmod/` will be cached.
+
 
 ## Example
 
@@ -28,7 +42,7 @@ jobs:
       - uses: goto-bus-stop/setup-zig@v2
         with:
           version: 0.10.1
-      - uses: Hanaasagi/zig-action-cache@master
+      - uses: Hanaasagi/zig-action-cache@master  # Or Hanaasagi/zig-action-cache@v1
         with:
           # description: 'The prefix cache key, this can be changed to start a new cache manually.'
           # required: false
@@ -65,3 +79,7 @@ jobs:
       - name: Run Tests
         run: zig build test
 ```
+
+<hr>
+
+*Please feel free to report bugs or open pull requests.*
