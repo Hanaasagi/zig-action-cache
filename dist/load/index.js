@@ -58725,10 +58725,13 @@ class Config {
             // 3. compute hash
             const hash = hasher.digest('hex');
             config.restoreKey = `${config.keyPrefix}-${hash}`;
-            const keyFiles = ['build.zig'];
+            const keyFiles = ['build.zig', 'deps.zig'];
             config.keyFiles = keyFiles;
             hasher = crypto_1.default.createHash('sha1');
             for (const file of keyFiles) {
+                if (!fs_1.default.existsSync(file)) {
+                    continue;
+                }
                 try {
                     for (var _d = true, _e = (e_1 = void 0, __asyncValues(fs_1.default.createReadStream(file))), _f; _f = yield _e.next(), _a = _f.done, !_a;) {
                         _c = _f.value;
