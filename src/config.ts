@@ -17,7 +17,7 @@ class ZigInfo {
     public version: string,
     public global_cache_dir: string,
     public target: string
-  ) { }
+  ) {}
 
   static async new(): Promise<ZigInfo> {
     // $ zig version
@@ -42,9 +42,9 @@ class ZigInfo {
 }
 
 enum PackageManager {
-  Null,
-  ZigMod,
-  Gyro
+  Null = 'null',
+  ZigMod = 'zigmod',
+  Gyro = 'gyro'
 }
 
 export class Config {
@@ -167,7 +167,7 @@ export class Config {
       keyFiles.push(file);
     }
 
-    if (config.packageManager == PackageManager.Gyro) {
+    if (config.packageManager === PackageManager.Gyro) {
       for (const file of ['gyro.zzz', 'gyro.lock']) {
         if (!fs.existsSync(file)) {
           continue;
@@ -175,7 +175,7 @@ export class Config {
         keyFiles.push(file);
       }
     }
-    if (config.packageManager == PackageManager.ZigMod) {
+    if (config.packageManager === PackageManager.ZigMod) {
       for (const file of ['zig.mod', 'zigmod.lock']) {
         if (!fs.existsSync(file)) {
           continue;

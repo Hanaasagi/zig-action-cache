@@ -58658,9 +58658,9 @@ class ZigInfo {
 }
 var PackageManager;
 (function (PackageManager) {
-    PackageManager[PackageManager["Null"] = 0] = "Null";
-    PackageManager[PackageManager["ZigMod"] = 1] = "ZigMod";
-    PackageManager[PackageManager["Gyro"] = 2] = "Gyro";
+    PackageManager["Null"] = "null";
+    PackageManager["ZigMod"] = "zigmod";
+    PackageManager["Gyro"] = "gyro";
 })(PackageManager || (PackageManager = {}));
 class Config {
     constructor() {
@@ -58759,7 +58759,7 @@ class Config {
                 }
                 keyFiles.push(file);
             }
-            if (config.packageManager == PackageManager.Gyro) {
+            if (config.packageManager === PackageManager.Gyro) {
                 for (const file of ['gyro.zzz', 'gyro.lock']) {
                     if (!fs_1.default.existsSync(file)) {
                         continue;
@@ -58767,7 +58767,7 @@ class Config {
                     keyFiles.push(file);
                 }
             }
-            if (config.packageManager == PackageManager.ZigMod) {
+            if (config.packageManager === PackageManager.ZigMod) {
                 for (const file of ['zig.mod', 'zigmod.lock']) {
                     if (!fs_1.default.existsSync(file)) {
                         continue;
