@@ -1,5 +1,5 @@
 name: 'Zig Action Cache'
-description: 'A GitHub Action that caches compilation results for Zig project.'
+description: 'A GitHub Action that implements smart caching rules for Zig projects'
 author: 'Hanaasagi <ambiguous404@gmai.com>'
 
 branding:
