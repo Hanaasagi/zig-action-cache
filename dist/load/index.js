@@ -58703,6 +58703,14 @@ class Config {
         for (const dir of cacheDirectories.trim().split(/\s+/).filter(Boolean)) {
             cachePaths.push(dir);
         }
+        // https://github.com/mattnite/gyro
+        if (fs_1.default.existsSync('gyro.lock')) {
+            cachePaths.push('.gyro/');
+        }
+        // https://github.com/nektro/zigmod/blob/master/docs/deps.zig.md
+        if (fs_1.default.existsSync('zigmod.lock')) {
+            cachePaths.push('.zigmod/');
+        }
         return cachePaths;
     }
     static new() {
@@ -58725,13 +58733,23 @@ class Config {
             // 3. compute hash
             const hash = hasher.digest('hex');
             config.restoreKey = `${config.keyPrefix}-${hash}`;
-            const keyFiles = ['build.zig', 'deps.zig'];
-            config.keyFiles = keyFiles;
-            hasher = crypto_1.default.createHash('sha1');
-            for (const file of keyFiles) {
+            const keyFiles = [];
+            for (const file of [
+                'build.zig',
+                'deps.zig',
+                'gyro.zzz',
+                'gyro.lock',
+                'zig.mod',
+                'zigmod.lock'
+            ]) {
                 if (!fs_1.default.existsSync(file)) {
                     continue;
                 }
+                keyFiles.push(file);
+            }
+            config.keyFiles = keyFiles;
+            hasher = crypto_1.default.createHash('sha1');
+            for (const file of keyFiles) {
                 try {
                     for (var _d = true, _e = (e_1 = void 0, __asyncValues(fs_1.default.createReadStream(file))), _f; _f = yield _e.next(), _a = _f.done, !_a;) {
                         _c = _f.value;

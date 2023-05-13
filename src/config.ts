@@ -90,8 +90,19 @@ export class Config {
   static getCachePaths(): string[] {
     const cachePaths = ['zig-cache'];
     const cacheDirectories = core.getInput('cache-directories');
+
     for (const dir of cacheDirectories.trim().split(/\s+/).filter(Boolean)) {
       cachePaths.push(dir);
+    }
+
+    // https://github.com/mattnite/gyro
+    if (fs.existsSync('gyro.lock')) {
+      cachePaths.push('.gyro/');
+    }
+
+    // https://github.com/nektro/zigmod/blob/master/docs/deps.zig.md
+    if (fs.existsSync('zigmod.lock')) {
+      cachePaths.push('.zigmod/');
     }
 
     return cachePaths;
@@ -124,18 +135,30 @@ export class Config {
 
     config.restoreKey = `${config.keyPrefix}-${hash}`;
 
-    const keyFiles = ['build.zig', 'deps.zig'];
+    const keyFiles = [];
+    for (const file of [
+      'build.zig',
+      'deps.zig',
+      'gyro.zzz',
+      'gyro.lock',
+      'zig.mod',
+      'zigmod.lock'
+    ]) {
+      if (!fs.existsSync(file)) {
+        continue;
+      }
+      keyFiles.push(file);
+    }
+
     config.keyFiles = keyFiles;
 
     hasher = crypto.createHash('sha1');
     for (const file of keyFiles) {
-      if (!fs.existsSync(file)) {
-        continue;
-      }
       for await (const chunk of fs.createReadStream(file)) {
         hasher.update(chunk);
       }
     }
+
     config.cacheKey = `${config.restoreKey}-${hasher.digest('hex')}`;
 
     config.cachePaths = [zigInfo.global_cache_dir, ...this.getCachePaths()];
