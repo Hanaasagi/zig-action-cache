@@ -124,11 +124,14 @@ export class Config {
 
     config.restoreKey = `${config.keyPrefix}-${hash}`;
 
-    const keyFiles = ['build.zig'];
+    const keyFiles = ['build.zig', 'deps.zig'];
     config.keyFiles = keyFiles;
 
     hasher = crypto.createHash('sha1');
     for (const file of keyFiles) {
+      if (!fs.existsSync(file)) {
+        continue;
+      }
       for await (const chunk of fs.createReadStream(file)) {
         hasher.update(chunk);
       }
