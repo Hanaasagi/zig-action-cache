@@ -58656,6 +58656,12 @@ class ZigInfo {
         });
     }
 }
+var PackageManager;
+(function (PackageManager) {
+    PackageManager[PackageManager["Null"] = 0] = "Null";
+    PackageManager[PackageManager["ZigMod"] = 1] = "ZigMod";
+    PackageManager[PackageManager["Gyro"] = 2] = "Gyro";
+})(PackageManager || (PackageManager = {}));
 class Config {
     constructor() {
         this.cachePaths = [];
@@ -58665,6 +58671,7 @@ class Config {
         this.keyZigInfo = '';
         this.keyEnvs = [];
         this.keyFiles = [];
+        this.packageManager = PackageManager.Null;
     }
     static getKeyPrefix() {
         const keyParts = [];
@@ -58703,6 +58710,7 @@ class Config {
         for (const dir of cacheDirectories.trim().split(/\s+/).filter(Boolean)) {
             cachePaths.push(dir);
         }
+        // For project that used package manager, only cache deps when they have lockfile,
         // https://github.com/mattnite/gyro
         if (fs_1.default.existsSync('gyro.lock')) {
             cachePaths.push('.gyro/');
@@ -58713,10 +58721,21 @@ class Config {
         }
         return cachePaths;
     }
+    static detectPackageManager() {
+        if (fs_1.default.existsSync('./gyro.zzz')) {
+            return PackageManager.Gyro;
+        }
+        if (fs_1.default.existsSync('zig.mod')) {
+            return PackageManager.ZigMod;
+        }
+        return PackageManager.Null;
+    }
     static new() {
         var _a, e_1, _b, _c;
         return __awaiter(this, void 0, void 0, function* () {
             const config = new Config();
+            // try to detect package manager
+            config.packageManager = this.detectPackageManager();
             config.keyPrefix = this.getKeyPrefix();
             const zigInfo = yield ZigInfo.new();
             config.keyZigInfo = `${zigInfo.version} ${zigInfo.target}`;
@@ -58734,18 +58753,27 @@ class Config {
             const hash = hasher.digest('hex');
             config.restoreKey = `${config.keyPrefix}-${hash}`;
             const keyFiles = [];
-            for (const file of [
-                'build.zig',
-                'deps.zig',
-                'gyro.zzz',
-                'gyro.lock',
-                'zig.mod',
-                'zigmod.lock'
-            ]) {
+            for (const file of ['build.zig', 'deps.zig']) {
                 if (!fs_1.default.existsSync(file)) {
                     continue;
                 }
                 keyFiles.push(file);
+            }
+            if (config.packageManager == PackageManager.Gyro) {
+                for (const file of ['gyro.zzz', 'gyro.lock']) {
+                    if (!fs_1.default.existsSync(file)) {
+                        continue;
+                    }
+                    keyFiles.push(file);
+                }
+            }
+            if (config.packageManager == PackageManager.ZigMod) {
+                for (const file of ['zig.mod', 'zigmod.lock']) {
+                    if (!fs_1.default.existsSync(file)) {
+                        continue;
+                    }
+                    keyFiles.push(file);
+                }
             }
             config.keyFiles = keyFiles;
             hasher = crypto_1.default.createHash('sha1');
@@ -58778,6 +58806,8 @@ class Config {
     }
     printInfo() {
         core.startGroup('Cache Configuration');
+        core.info(`Package Manager:`);
+        core.info(`    ${this.packageManager}`);
         core.info(`Cache Paths:`);
         for (const p of this.cachePaths) {
             core.info(`    ${p}`);
@@ -58793,7 +58823,7 @@ class Config {
         for (const env of this.keyEnvs) {
             core.info(`  - ${env}`);
         }
-        core.info(`.. Lockfiles considered:`);
+        core.info(`.. Build related files considered:`);
         for (const file of this.keyFiles) {
             core.info(`  - ${file}`);
         }

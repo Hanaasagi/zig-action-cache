@@ -17,7 +17,7 @@ class ZigInfo {
     public version: string,
     public global_cache_dir: string,
     public target: string
-  ) {}
+  ) { }
 
   static async new(): Promise<ZigInfo> {
     // $ zig version
@@ -41,6 +41,12 @@ class ZigInfo {
   }
 }
 
+enum PackageManager {
+  Null,
+  ZigMod,
+  Gyro
+}
+
 export class Config {
   cachePaths: string[] = [];
   cacheKey = '';
@@ -49,6 +55,7 @@ export class Config {
   private keyZigInfo = '';
   private keyEnvs: string[] = [];
   private keyFiles: string[] = [];
+  private packageManager: PackageManager = PackageManager.Null;
 
   static getKeyPrefix(): string {
     const keyParts = [];
@@ -95,6 +102,8 @@ export class Config {
       cachePaths.push(dir);
     }
 
+    // For project that used package manager, only cache deps when they have lockfile,
+
     // https://github.com/mattnite/gyro
     if (fs.existsSync('gyro.lock')) {
       cachePaths.push('.gyro/');
@@ -108,8 +117,23 @@ export class Config {
     return cachePaths;
   }
 
+  static detectPackageManager(): PackageManager {
+    if (fs.existsSync('./gyro.zzz')) {
+      return PackageManager.Gyro;
+    }
+
+    if (fs.existsSync('zig.mod')) {
+      return PackageManager.ZigMod;
+    }
+
+    return PackageManager.Null;
+  }
+
   static async new(): Promise<Config> {
     const config = new Config();
+
+    // try to detect package manager
+    config.packageManager = this.detectPackageManager();
 
     config.keyPrefix = this.getKeyPrefix();
 
@@ -136,18 +160,28 @@ export class Config {
     config.restoreKey = `${config.keyPrefix}-${hash}`;
 
     const keyFiles = [];
-    for (const file of [
-      'build.zig',
-      'deps.zig',
-      'gyro.zzz',
-      'gyro.lock',
-      'zig.mod',
-      'zigmod.lock'
-    ]) {
+    for (const file of ['build.zig', 'deps.zig']) {
       if (!fs.existsSync(file)) {
         continue;
       }
       keyFiles.push(file);
+    }
+
+    if (config.packageManager == PackageManager.Gyro) {
+      for (const file of ['gyro.zzz', 'gyro.lock']) {
+        if (!fs.existsSync(file)) {
+          continue;
+        }
+        keyFiles.push(file);
+      }
+    }
+    if (config.packageManager == PackageManager.ZigMod) {
+      for (const file of ['zig.mod', 'zigmod.lock']) {
+        if (!fs.existsSync(file)) {
+          continue;
+        }
+        keyFiles.push(file);
+      }
     }
 
     config.keyFiles = keyFiles;
@@ -168,6 +202,8 @@ export class Config {
 
   printInfo(): void {
     core.startGroup('Cache Configuration');
+    core.info(`Package Manager:`);
+    core.info(`    ${this.packageManager}`);
     core.info(`Cache Paths:`);
     for (const p of this.cachePaths) {
       core.info(`    ${p}`);
@@ -183,7 +219,7 @@ export class Config {
     for (const env of this.keyEnvs) {
       core.info(`  - ${env}`);
     }
-    core.info(`.. Lockfiles considered:`);
+    core.info(`.. Build related files considered:`);
     for (const file of this.keyFiles) {
       core.info(`  - ${file}`);
     }
