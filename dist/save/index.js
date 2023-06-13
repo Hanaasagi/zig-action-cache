@@ -58779,16 +58779,11 @@ class Config {
             hasher = crypto_1.default.createHash('sha1');
             for (const file of keyFiles) {
                 try {
-                    for (var _d = true, _e = (e_1 = void 0, __asyncValues(fs_1.default.createReadStream(file))), _f; _f = yield _e.next(), _a = _f.done, !_a;) {
+                    for (var _d = true, _e = (e_1 = void 0, __asyncValues(fs_1.default.createReadStream(file))), _f; _f = yield _e.next(), _a = _f.done, !_a; _d = true) {
                         _c = _f.value;
                         _d = false;
-                        try {
-                            const chunk = _c;
-                            hasher.update(chunk);
-                        }
-                        finally {
-                            _d = true;
-                        }
+                        const chunk = _c;
+                        hasher.update(chunk);
                     }
                 }
                 catch (e_1_1) { e_1 = { error: e_1_1 }; }
