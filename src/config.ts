@@ -44,7 +44,8 @@ class ZigInfo {
 enum PackageManager {
   Null = 'null',
   ZigMod = 'zigmod',
-  Gyro = 'gyro'
+  Gyro = 'gyro',
+  Builtin = 'builtin' // build.zig.zon
 }
 
 export class Config {
@@ -114,16 +115,25 @@ export class Config {
       cachePaths.push('.zigmod/');
     }
 
+    // This is part of global cache
+    // if (fs.existsSync('build.zig.zon')) {
+    //   cachePaths.push('~/.cache/zig/p/');
+    // }
+
     return cachePaths;
   }
 
   static detectPackageManager(): PackageManager {
-    if (fs.existsSync('./gyro.zzz')) {
+    if (fs.existsSync('gyro.zzz')) {
       return PackageManager.Gyro;
     }
 
     if (fs.existsSync('zig.mod')) {
       return PackageManager.ZigMod;
+    }
+
+    if (fs.existsSync('build.zig.zon')) {
+      return PackageManager.Builtin;
     }
 
     return PackageManager.Null;
@@ -177,6 +187,15 @@ export class Config {
     }
     if (config.packageManager === PackageManager.ZigMod) {
       for (const file of ['zig.mod', 'zigmod.lock']) {
+        if (!fs.existsSync(file)) {
+          continue;
+        }
+        keyFiles.push(file);
+      }
+    }
+
+    if (config.packageManager === PackageManager.Builtin) {
+      for (const file of ['build.zig.zon']) {
         if (!fs.existsSync(file)) {
           continue;
         }
