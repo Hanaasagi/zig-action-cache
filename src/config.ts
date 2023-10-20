@@ -12,19 +12,9 @@ export const CARGO_HOME = process.env.CARGO_HOME || path.join(HOME, '.cargo');
 
 export const STATE_KEY = 'ZIG_CACHE_KEY';
 
-class ZigInfo {
-  constructor(
-    public version: string,
-    public global_cache_dir: string,
-    public target: string
-  ) {}
-
-  static async new(): Promise<ZigInfo> {
-    // $ zig version
-    // 0.10.1
-    let stdout = await getCmdOutput('zig', ['version']);
-    const version = stdout.trim();
-
+function parseZigEnv(data: string) {
+  try {
+    // Before 0.12.0-dev.1124+ec21da0d5, this is a json
     // $ zig env
     // {
     //  "zig_exe": "/usr/bin/zig",
@@ -34,10 +24,53 @@ class ZigInfo {
     //  "version": "0.10.1",
     //  "target": "x86_64-linux.6.3.1...6.3.1-gnu.2.36"
     // }
-    stdout = await getCmdOutput('zig', ['env']);
-    const env_info = JSON.parse(stdout);
+    return JSON.parse(data);
+  } catch {
+    // >> zig env
+    // zig_exe=/home/kumiko/zig/zig-linux-x86_64-0.12.0-dev.1124+ec21da0d5/zig
+    // lib_dir=lib
+    // std_dir=lib/std
+    // global_cache_dir=/home/kumiko/.cache/zig
+    // version=0.12.0-dev.1124+ec21da0d5
+    // target=x86_64-linux.6.5.7...6.5.7-gnu.2.19
+    // ZIG_GLOBAL_CACHE_DIR
 
-    return new ZigInfo(version, env_info.global_cache_dir, env_info.target);
+    const lines = data.trim().split(os.EOL);
+    const envInfo = {};
+
+    // Parse each line and populate the object
+    lines.forEach(line => {
+      //split on first occurance of =
+      const envArr = line.split(/=(.+)?/);
+
+      //clean up value, extracting from quotation if necessary
+      if (!envArr[1]) envArr[1] = '';
+      const val = envArr[1].replace(/^['"]/, '').replace(/['"]$/, '');
+      // @ts-ignore
+      envInfo[envArr[0]] = val;
+    });
+
+    return envInfo;
+  }
+}
+
+class ZigInfo {
+  constructor(
+    public version: string,
+    public global_cache_dir: string,
+    public target: string
+  ) { }
+
+  static async new(): Promise<ZigInfo> {
+    // $ zig version
+    // 0.10.1
+    let stdout = await getCmdOutput('zig', ['version']);
+    const version = stdout.trim();
+
+    stdout = await getCmdOutput('zig', ['env']);
+    const envInfo = parseZigEnv(stdout);
+
+    return new ZigInfo(version, envInfo.global_cache_dir, envInfo.target);
   }
 }
 

@@ -58855,6 +58855,45 @@ const utils_1 = __nccwpck_require__(1314);
 const HOME = os_1.default.homedir();
 exports.CARGO_HOME = process.env.CARGO_HOME || path_1.default.join(HOME, '.cargo');
 exports.STATE_KEY = 'ZIG_CACHE_KEY';
+function parseZigEnv(data) {
+    try {
+        // Before 0.12.0-dev.1124+ec21da0d5, this is a json
+        // $ zig env
+        // {
+        //  "zig_exe": "/usr/bin/zig",
+        //  "lib_dir": "/usr/lib/zig",
+        //  "std_dir": "/usr/lib/zig/std",
+        //  "global_cache_dir": "/home/kumiko/.cache/zig",
+        //  "version": "0.10.1",
+        //  "target": "x86_64-linux.6.3.1...6.3.1-gnu.2.36"
+        // }
+        return JSON.parse(data);
+    }
+    catch (_a) {
+        // >> zig env
+        // zig_exe=/home/kumiko/zig/zig-linux-x86_64-0.12.0-dev.1124+ec21da0d5/zig
+        // lib_dir=lib
+        // std_dir=lib/std
+        // global_cache_dir=/home/kumiko/.cache/zig
+        // version=0.12.0-dev.1124+ec21da0d5
+        // target=x86_64-linux.6.5.7...6.5.7-gnu.2.19
+        // ZIG_GLOBAL_CACHE_DIR
+        const lines = data.trim().split(os_1.default.EOL);
+        const envInfo = {};
+        // Parse each line and populate the object
+        lines.forEach(line => {
+            //split on first occurance of =
+            const envArr = line.split(/=(.+)?/);
+            //clean up value, extracting from quotation if necessary
+            if (!envArr[1])
+                envArr[1] = '';
+            const val = envArr[1].replace(/^['"]/, '').replace(/['"]$/, '');
+            // @ts-ignore
+            envInfo[envArr[0]] = val;
+        });
+        return envInfo;
+    }
+}
 class ZigInfo {
     constructor(version, global_cache_dir, target) {
         this.version = version;
@@ -58867,18 +58906,9 @@ class ZigInfo {
             // 0.10.1
             let stdout = yield (0, utils_1.getCmdOutput)('zig', ['version']);
             const version = stdout.trim();
-            // $ zig env
-            // {
-            //  "zig_exe": "/usr/bin/zig",
-            //  "lib_dir": "/usr/lib/zig",
-            //  "std_dir": "/usr/lib/zig/std",
-            //  "global_cache_dir": "/home/kumiko/.cache/zig",
-            //  "version": "0.10.1",
-            //  "target": "x86_64-linux.6.3.1...6.3.1-gnu.2.36"
-            // }
             stdout = yield (0, utils_1.getCmdOutput)('zig', ['env']);
-            const env_info = JSON.parse(stdout);
-            return new ZigInfo(version, env_info.global_cache_dir, env_info.target);
+            const envInfo = parseZigEnv(stdout);
+            return new ZigInfo(version, envInfo.global_cache_dir, envInfo.target);
         });
     }
 }
