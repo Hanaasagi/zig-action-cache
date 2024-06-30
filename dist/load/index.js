@@ -58962,7 +58962,7 @@ class Config {
         return keyEnvs;
     }
     static getCachePaths() {
-        const cachePaths = ['zig-cache'];
+        const cachePaths = ['zig-cache', '.zig-cache'];
         const cacheDirectories = core.getInput('cache-directories');
         for (const dir of cacheDirectories.trim().split(/\s+/).filter(Boolean)) {
             cachePaths.push(dir);

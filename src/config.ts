@@ -129,7 +129,7 @@ export class Config {
   }
 
   static getCachePaths(): string[] {
-    const cachePaths = ['zig-cache'];
+    const cachePaths = ['zig-cache', '.zig-cache'];
     const cacheDirectories = core.getInput('cache-directories');
 
     for (const dir of cacheDirectories.trim().split(/\s+/).filter(Boolean)) {
